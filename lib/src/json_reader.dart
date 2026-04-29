@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'spec_reader.dart';
 
 class SCodecError implements Exception {
   final String code;
@@ -8,9 +9,11 @@ class SCodecError implements Exception {
   @override String toString() => 'SCodecError($code): $message';
 }
 
-class JsonReader {
+class JsonReader implements SpecReader {
   final String _src;
   int _pos = 0;
+  final List<bool> _firstField = [];
+  final List<bool> _firstElem = [];
 
   JsonReader(Uint8List data) : _src = utf8.decode(data);
 
@@ -128,8 +131,10 @@ class JsonReader {
     return _src.substring(start, _pos);
   }
 
+  @override
   String readString() => _parseString();
 
+  @override
   bool readBool() {
     final ch = _peek();
     if (ch == 't') { for (final c in 'true'.split('')) { if (_read() != c) throw SCodecError('internal', "json: expected 'true'"); } return true; }
@@ -137,6 +142,7 @@ class JsonReader {
     throw SCodecError('internal', "json: expected bool, got '$ch'");
   }
 
+  @override
   int readInt32() {
     final raw = _parseNumberRaw();
     final v = int.tryParse(raw);
@@ -144,6 +150,7 @@ class JsonReader {
     return v;
   }
 
+  @override
   int readInt64() {
     if (_peek() == '"') {
       final s = _parseString();
@@ -153,6 +160,7 @@ class JsonReader {
     return int.tryParse(raw) ?? (throw SCodecError('internal', 'json: invalid int64: $raw'));
   }
 
+  @override
   int readUint32() {
     final raw = _parseNumberRaw();
     final v = int.tryParse(raw);
@@ -160,6 +168,7 @@ class JsonReader {
     return v;
   }
 
+  @override
   int readUint64() {
     if (_peek() == '"') {
       final s = _parseString();
@@ -169,55 +178,98 @@ class JsonReader {
     return int.tryParse(raw) ?? (throw SCodecError('internal', 'json: invalid uint64: $raw'));
   }
 
+  @override
   double readFloat32() {
     final raw = _parseNumberRaw();
     return double.tryParse(raw) ?? (throw SCodecError('internal', 'json: invalid float32: $raw'));
   }
 
+  @override
   double readFloat64() {
     final raw = _parseNumberRaw();
     return double.tryParse(raw) ?? (throw SCodecError('internal', 'json: invalid float64: $raw'));
   }
 
+  @override
   void readNull() {
     for (final c in 'null'.split('')) { if (_read() != c) throw SCodecError('internal', "json: expected 'null'"); }
   }
 
+  @override
   Uint8List readBytes() {
     final s = _parseString();
     return base64.decode(s);
   }
 
+  @override
   String readEnum() => _parseString();
 
-  void beginObject() => _expect('{');
-
-  bool hasNextField() => _peek() != '}';
-
-  String readFieldName() => _parseString();
-
-  void nextFieldSeparator() {
-    final ch = _peek();
-    if (ch == ',') _pos++;
-    else if (ch != '}') throw SCodecError('internal', "json: expected ',' or '}'");
+  @override
+  void beginObject() {
+    _expect('{');
+    _firstField.add(true);
   }
 
+  @override
+  bool hasNextField() {
+    final ch = _peek();
+    if (ch == '}') {
+      _firstField.removeLast();
+      return false;
+    }
+    if (!_firstField.last) {
+      if (ch != ',') throw SCodecError('internal', "json: expected ',' or '}', got '$ch'");
+      _pos++;
+    } else {
+      _firstField[_firstField.length - 1] = false;
+    }
+    return true;
+  }
+
+  @override
+  String readFieldName() {
+    final key = _parseString();
+    _ws();
+    if (_pos < _src.length && _src[_pos] == ':') {
+      _pos++;
+    } else {
+      throw SCodecError('internal', "json: expected ':' after field name '$key'");
+    }
+    return key;
+  }
+
+  @override
   void endObject() => _expect('}');
 
-  void beginArray() => _expect('[');
-
-  bool hasNextElement() => _peek() != ']';
-
-  void nextElementSeparator() {
-    final ch = _peek();
-    if (ch == ',') _pos++;
-    else if (ch != ']') throw SCodecError('internal', "json: expected ',' or ']'");
+  @override
+  void beginArray() {
+    _expect('[');
+    _firstElem.add(true);
   }
 
+  @override
+  bool hasNextElement() {
+    final ch = _peek();
+    if (ch == ']') {
+      _firstElem.removeLast();
+      return false;
+    }
+    if (!_firstElem.last) {
+      if (ch != ',') throw SCodecError('internal', "json: expected ',' or ']', got '$ch'");
+      _pos++;
+    } else {
+      _firstElem[_firstElem.length - 1] = false;
+    }
+    return true;
+  }
+
+  @override
   void endArray() => _expect(']');
 
+  @override
   bool isNull() => _peek() == 'n';
 
+  @override
   void skip() {
     _ws();
     if (_pos >= _src.length) throw SCodecError('internal', 'json: unexpected end of input');
@@ -233,21 +285,14 @@ class JsonReader {
         throw SCodecError('internal', 'json: unterminated string in skip');
       case '{':
         beginObject();
-        var first = true;
         while (hasNextField()) {
-          if (!first) nextFieldSeparator();
-          first = false;
           readFieldName();
-          _expect(':');
           skip();
         }
         endObject();
       case '[':
         beginArray();
-        var first = true;
         while (hasNextElement()) {
-          if (!first) nextElementSeparator();
-          first = false;
           skip();
         }
         endArray();

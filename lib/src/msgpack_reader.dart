@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'dart:convert';
+import 'spec_reader.dart';
 
 class SCodecError implements Exception {
   final String code;
@@ -8,7 +9,7 @@ class SCodecError implements Exception {
   @override String toString() => 'SCodecError($code): $message';
 }
 
-class MsgPackReader {
+class MsgPackReader implements SpecReader {
   final Uint8List _buf;
   int _pos = 0;
   List<int> _containerCount = [];
@@ -74,6 +75,7 @@ class MsgPackReader {
     throw SCodecError('internal', 'msgpack: expected array, got 0x${b.toRadixString(16)}');
   }
 
+  @override
   String readString() {
     final b = _readByte();
     int len;
@@ -113,6 +115,7 @@ class MsgPackReader {
     throw SCodecError('internal', 'msgpack: expected float, got 0x${b.toRadixString(16)}');
   }
 
+  @override
   bool readBool() {
     final b = _readByte();
     if (b == 0xC3) return true;
@@ -120,6 +123,7 @@ class MsgPackReader {
     throw SCodecError('internal', 'msgpack: expected bool, got 0x${b.toRadixString(16)}');
   }
 
+  @override
   void readNull() {
     final b = _readByte();
     if (b != 0xC0) {
@@ -127,11 +131,13 @@ class MsgPackReader {
     }
   }
 
+  @override
   bool isNull() {
     if (_pos >= _buf.length) return false;
     return _buf[_pos] == 0xC0;
   }
 
+  @override
   void skip() {
     final b = _readByte();
     if (b <= 0x7F || b >= 0xE0) return;
@@ -187,11 +193,13 @@ class MsgPackReader {
     }
   }
 
+  @override
   void beginObject() {
     final n = readMapHeader();
     _containerCount.add(n);
   }
 
+  @override
   bool hasNextField() {
     final top = _containerCount.length - 1;
     if (_containerCount[top] > 0) {
@@ -202,15 +210,19 @@ class MsgPackReader {
     return false;
   }
 
+  @override
   String readFieldName() => readString();
 
+  @override
   void endObject() {}
 
+  @override
   void beginArray() {
     final n = readArrayHeader();
     _containerCount.add(n);
   }
 
+  @override
   bool hasNextElement() {
     final top = _containerCount.length - 1;
     if (_containerCount[top] > 0) {
@@ -221,5 +233,40 @@ class MsgPackReader {
     return false;
   }
 
+  @override
   void endArray() {}
+
+  @override
+  int readInt32() => readInt();
+
+  @override
+  int readInt64() => readInt();
+
+  @override
+  int readUint32() => readInt() & 0xFFFFFFFF;
+
+  @override
+  int readUint64() => readInt();
+
+  @override
+  double readFloat32() => readFloat();
+
+  @override
+  double readFloat64() => readFloat();
+
+  @override
+  String readEnum() => readString();
+
+  @override
+  Uint8List readBytes() {
+    final b = _readByte();
+    int len;
+    if (b == 0xC4) len = _readByte();
+    else if (b == 0xC5) len = _readU16();
+    else if (b == 0xC6) len = _readU32();
+    else throw SCodecError('internal', 'msgpack: expected bin, got 0x${b.toRadixString(16)}');
+    final v = _buf.buffer.asUint8List(_pos, len);
+    _pos += len;
+    return Uint8List.fromList(v);
+  }
 }
