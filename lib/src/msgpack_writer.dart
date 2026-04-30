@@ -32,17 +32,23 @@ class MsgPackWriter {
     else { _writeByte(0xD2); _writeU32(value & 0xFFFFFFFF); }
   }
 
-  void writeInt64(int value) {
-    if (value >= 0 && value <= 0x7F) { _writeByte(value); }
-    else if (value < 0 && value >= -0x20) { _writeByte(value & 0xFF); }
-    else if (value >= 0 && value <= 0xFF) { _writeByte(0xCC); _writeByte(value); }
-    else if (value >= 0 && value <= 0xFFFF) { _writeByte(0xCD); _writeU16(value); }
-    else if (value >= 0 && value <= 0xFFFFFFFF) { _writeByte(0xCE); _writeU32(value); }
-    else if (value >= 0) { _writeByte(0xCF); _writeU64(value); }
-    else if (value >= -0x80) { _writeByte(0xD0); _writeByte(value & 0xFF); }
-    else if (value >= -0x8000) { _writeByte(0xD1); _writeU16(value & 0xFFFF); }
-    else if (value >= -0x80000000) { _writeByte(0xD2); _writeU32(value & 0xFFFFFFFF); }
-    else { _writeByte(0xD3); _writeU64(value); }
+  void _writeU64BigInt(BigInt v) {
+    for (var i = 7; i >= 0; i--) {
+      _writeByte((v >> (i * 8)).toUnsigned(8).toInt());
+    }
+  }
+
+  void writeInt64(BigInt value) {
+    if (value >= BigInt.zero && value <= BigInt.from(0x7F)) { _writeByte(value.toInt()); }
+    else if (value < BigInt.zero && value >= BigInt.from(-0x20)) { _writeByte(value.toInt() & 0xFF); }
+    else if (value >= BigInt.zero && value <= BigInt.from(0xFF)) { _writeByte(0xCC); _writeByte(value.toInt()); }
+    else if (value >= BigInt.zero && value <= BigInt.from(0xFFFF)) { _writeByte(0xCD); _writeU16(value.toInt()); }
+    else if (value >= BigInt.zero && value <= BigInt.from(0xFFFFFFFF)) { _writeByte(0xCE); _writeU32(value.toInt()); }
+    else if (value >= BigInt.zero) { _writeByte(0xCF); _writeU64BigInt(value); }
+    else if (value >= BigInt.from(-0x80)) { _writeByte(0xD0); _writeByte(value.toInt() & 0xFF); }
+    else if (value >= BigInt.from(-0x8000)) { _writeByte(0xD1); _writeU16(value.toInt() & 0xFFFF); }
+    else if (value >= BigInt.from(-0x80000000)) { _writeByte(0xD2); _writeU32(value.toInt() & 0xFFFFFFFF); }
+    else { _writeByte(0xD3); _writeU64BigInt(value >= BigInt.zero ? value : value + BigInt.parse('18446744073709551616')); }
   }
 
   void writeUint32(int value) {
@@ -52,12 +58,12 @@ class MsgPackWriter {
     else { _writeByte(0xCE); _writeU32(value); }
   }
 
-  void writeUint64(int value) {
-    if (value >= 0 && value <= 0x7F) { _writeByte(value); }
-    else if (value >= 0 && value <= 0xFF) { _writeByte(0xCC); _writeByte(value); }
-    else if (value >= 0 && value <= 0xFFFF) { _writeByte(0xCD); _writeU16(value); }
-    else if (value >= 0 && value <= 0xFFFFFFFF) { _writeByte(0xCE); _writeU32(value); }
-    else { _writeByte(0xCF); _writeU64(value); }
+  void writeUint64(BigInt value) {
+    if (value >= BigInt.zero && value <= BigInt.from(0x7F)) { _writeByte(value.toInt()); }
+    else if (value >= BigInt.zero && value <= BigInt.from(0xFF)) { _writeByte(0xCC); _writeByte(value.toInt()); }
+    else if (value >= BigInt.zero && value <= BigInt.from(0xFFFF)) { _writeByte(0xCD); _writeU16(value.toInt()); }
+    else if (value >= BigInt.zero && value <= BigInt.from(0xFFFFFFFF)) { _writeByte(0xCE); _writeU32(value.toInt()); }
+    else { _writeByte(0xCF); _writeU64BigInt(value); }
   }
 
   void writeFloat32(double value) {

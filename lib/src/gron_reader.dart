@@ -54,16 +54,9 @@ class GronReader {
   String readString() { final v = _unescape(_lines[_cursor++].val); return v; }
   bool readBool() => _lines[_cursor++].val == "true";
   int readInt32() => int.parse(_lines[_cursor++].val);
-  int readInt64() => int.parse(_unescape(_lines[_cursor++].val));
+  BigInt readInt64() => BigInt.parse(_unescape(_lines[_cursor++].val));
   int readUint32() => int.parse(_lines[_cursor++].val);
-  int readUint64() {
-    final s = _unescape(_lines[_cursor++].val);
-    final bi = BigInt.parse(s);
-    if (bi > BigInt.from(9223372036854775807)) {
-      return (bi - BigInt.parse('18446744073709551616')).toInt();
-    }
-    return bi.toInt();
-  }
+  BigInt readUint64() => BigInt.parse(_unescape(_lines[_cursor++].val));
 
   double readFloat32() {
     final v = _lines[_cursor++].val;

@@ -89,18 +89,22 @@ class MsgPackReader implements SpecReader {
     return s;
   }
 
-  int _readU64() {
-    var v = 0;
-    for (var i = 0; i < 8; i++) {
-      v = (v << 8) | _buf[_pos + i];
-    }
+  BigInt _readU64() {
+    final bytes = Uint8List.fromList(_buf.sublist(_pos, _pos + 8));
     _pos += 8;
-    return v;
+    var result = BigInt.zero;
+    for (var i = 0; i < 8; i++) {
+      result = (result << 8) | BigInt.from(bytes[i]);
+    }
+    return result;
   }
 
-  int _readI64() {
-    final v = _readU64();
-    return v;
+  BigInt _readI64() {
+    final u64 = _readU64();
+    if (u64 >= BigInt.from(0x8000000000000000)) {
+      return u64 - BigInt.from(0x10000000000000000);
+    }
+    return u64;
   }
 
   int readInt() {
@@ -110,12 +114,10 @@ class MsgPackReader implements SpecReader {
     if (b == 0xCC) return _readByte();
     if (b == 0xCD) return _readU16();
     if (b == 0xCE) return _readU32();
-    if (b == 0xCF) return _readU64();
     if (b == 0xD0) return _readByte().toSigned(8);
     if (b == 0xD1) return _readI16();
     if (b == 0xD2) return _readI32();
-    if (b == 0xD3) return _readI64();
-    throw SCodecError('internal', 'msgpack: expected int, got 0x${b.toRadixString(16)}');
+    throw SCodecError('internal', 'msgpack: expected int (32-bit), got 0x${b.toRadixString(16)}');
   }
 
   double readFloat() {
@@ -258,13 +260,33 @@ class MsgPackReader implements SpecReader {
   int readInt32() => readInt();
 
   @override
-  int readInt64() => readInt();
+  BigInt readInt64() {
+    final b = _readByte();
+    if (b <= 0x7F) return BigInt.from(b);
+    if (b >= 0xE0) return BigInt.from(b - 0x100);
+    if (b == 0xCC) return BigInt.from(_readByte());
+    if (b == 0xCD) return BigInt.from(_readU16());
+    if (b == 0xCE) return BigInt.from(_readU32());
+    if (b == 0xD0) return BigInt.from(_readByte().toSigned(8));
+    if (b == 0xD1) return BigInt.from(_readI16());
+    if (b == 0xD2) return BigInt.from(_readI32());
+    if (b == 0xD3) return _readI64();
+    throw SCodecError('internal', 'msgpack: expected int64, got 0x${b.toRadixString(16)}');
+  }
 
   @override
   int readUint32() => readInt() & 0xFFFFFFFF;
 
   @override
-  int readUint64() => readInt();
+  BigInt readUint64() {
+    final b = _readByte();
+    if (b <= 0x7F) return BigInt.from(b);
+    if (b == 0xCC) return BigInt.from(_readByte());
+    if (b == 0xCD) return BigInt.from(_readU16());
+    if (b == 0xCE) return BigInt.from(_readU32());
+    if (b == 0xCF) return _readU64();
+    throw SCodecError('internal', 'msgpack: expected uint64, got 0x${b.toRadixString(16)}');
+  }
 
   @override
   double readFloat32() => readFloat();

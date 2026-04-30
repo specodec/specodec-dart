@@ -11,9 +11,9 @@ abstract class SpecReader {
   String readString();
   bool readBool();
   int readInt32();
-  int readInt64();
+  BigInt readInt64();
   int readUint32();
-  int readUint64();
+  BigInt readUint64();
   double readFloat32();
   double readFloat64();
   void readNull();

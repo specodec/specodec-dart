@@ -146,13 +146,13 @@ class JsonReader implements SpecReader {
   }
 
   @override
-  int readInt64() {
+  BigInt readInt64() {
     if (_peek() == '"') {
       final s = _parseString();
-      return int.tryParse(s) ?? (throw SCodecError('internal', 'json: invalid int64: $s'));
+      return BigInt.tryParse(s) ?? (throw SCodecError('internal', 'json: invalid int64: $s'));
     }
     final raw = _parseNumberRaw();
-    return int.tryParse(raw) ?? (throw SCodecError('internal', 'json: invalid int64: $raw'));
+    return BigInt.tryParse(raw) ?? (throw SCodecError('internal', 'json: invalid int64: $raw'));
   }
 
   @override
@@ -164,17 +164,15 @@ class JsonReader implements SpecReader {
   }
 
   @override
-  int readUint64() {
+  BigInt readUint64() {
     if (_peek() == '"') {
       final s = _parseString();
       final bi = BigInt.tryParse(s);
       if (bi == null || bi < BigInt.zero) throw SCodecError('internal', 'json: invalid uint64: $s');
-      final lo = (bi & BigInt.from(0xFFFFFFFF)).toInt();
-      final hi = ((bi >> 32) & BigInt.from(0xFFFFFFFF)).toInt();
-      return (hi << 32) | lo;
+      return bi;
     }
     final raw = _parseNumberRaw();
-    return int.tryParse(raw) ?? (throw SCodecError('internal', 'json: invalid uint64: $raw'));
+    return BigInt.tryParse(raw) ?? (throw SCodecError('internal', 'json: invalid uint64: $raw'));
   }
 
   @override

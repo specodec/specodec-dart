@@ -44,7 +44,7 @@ class JsonWriter {
     _parts.add('$value');
   }
 
-  void writeInt64(int value) {
+  void writeInt64(BigInt value) {
     _parts.add('"$value"');
   }
 
@@ -52,14 +52,8 @@ class JsonWriter {
     _parts.add('$value');
   }
 
-  void writeUint64(int value) {
-    if (value >= 0) {
-      _parts.add('"$value"');
-    } else {
-      final hi = (value >> 32).toUnsigned(32);
-      final lo = value.toUnsigned(32);
-      _parts.add('"${BigInt.from(hi) * BigInt.from(4294967296) + BigInt.from(lo)}"');
-    }
+  void writeUint64(BigInt value) {
+    _parts.add('"$value"');
   }
 
   String _fmtFloat(double value) {
