@@ -53,10 +53,10 @@ class MsgPackWriter {
   }
 
   void writeUint64(int value) {
-    if (value <= 0x7F) { _writeByte(value); }
-    else if (value <= 0xFF) { _writeByte(0xCC); _writeByte(value); }
-    else if (value <= 0xFFFF) { _writeByte(0xCD); _writeU16(value); }
-    else if (value <= 0xFFFFFFFF) { _writeByte(0xCE); _writeU32(value); }
+    if (value >= 0 && value <= 0x7F) { _writeByte(value); }
+    else if (value >= 0 && value <= 0xFF) { _writeByte(0xCC); _writeByte(value); }
+    else if (value >= 0 && value <= 0xFFFF) { _writeByte(0xCD); _writeU16(value); }
+    else if (value >= 0 && value <= 0xFFFFFFFF) { _writeByte(0xCE); _writeU32(value); }
     else { _writeByte(0xCF); _writeU64(value); }
   }
 
@@ -91,6 +91,7 @@ class MsgPackWriter {
   }
 
   void writeField(String name) { writeString(name); }
+  void writeEnum(String value) { writeString(value); }
   void endObject() {}
 
   void beginArray(int elementCount) {

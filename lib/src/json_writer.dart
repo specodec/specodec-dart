@@ -53,21 +53,36 @@ class JsonWriter {
   }
 
   void writeUint64(int value) {
-    _parts.add('"$value"');
+    if (value >= 0) {
+      _parts.add('"$value"');
+    } else {
+      final hi = (value >> 32).toUnsigned(32);
+      final lo = value.toUnsigned(32);
+      _parts.add('"${BigInt.from(hi) * BigInt.from(4294967296) + BigInt.from(lo)}"');
+    }
+  }
+
+  String _fmtFloat(double value) {
+    var s = '$value';
+    if (s.contains('.') && !s.contains('e', 0) && !s.contains('E', 0)) {
+      s = s.replaceAll(RegExp(r'0+$'), '');
+      s = s.replaceAll(RegExp(r'\.$'), '');
+    }
+    return s;
   }
 
   void writeFloat32(double value) {
     if (value.isNaN || value.isInfinite) {
       throw ArgumentError('float32: NaN/Infinity not valid JSON');
     }
-    _parts.add('$value');
+    _parts.add(_fmtFloat(value));
   }
 
   void writeFloat64(double value) {
     if (value.isNaN || value.isInfinite) {
       throw ArgumentError('float64: NaN/Infinity not valid JSON');
     }
-    _parts.add('$value');
+    _parts.add(_fmtFloat(value));
   }
 
   void writeNull() {

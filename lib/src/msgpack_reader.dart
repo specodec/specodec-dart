@@ -1,13 +1,7 @@
 import 'dart:typed_data';
 import 'dart:convert';
+import 'scodec_error.dart';
 import 'spec_reader.dart';
-
-class SCodecError implements Exception {
-  final String code;
-  final String message;
-  SCodecError(this.code, this.message);
-  @override String toString() => 'SCodecError($code): $message';
-}
 
 class MsgPackReader implements SpecReader {
   final Uint8List _buf;
@@ -95,6 +89,20 @@ class MsgPackReader implements SpecReader {
     return s;
   }
 
+  int _readU64() {
+    var v = 0;
+    for (var i = 0; i < 8; i++) {
+      v = (v << 8) | _buf[_pos + i];
+    }
+    _pos += 8;
+    return v;
+  }
+
+  int _readI64() {
+    final v = _readU64();
+    return v;
+  }
+
   int readInt() {
     final b = _readByte();
     if (b <= 0x7F) return b;
@@ -102,9 +110,11 @@ class MsgPackReader implements SpecReader {
     if (b == 0xCC) return _readByte();
     if (b == 0xCD) return _readU16();
     if (b == 0xCE) return _readU32();
+    if (b == 0xCF) return _readU64();
     if (b == 0xD0) return _readByte().toSigned(8);
     if (b == 0xD1) return _readI16();
     if (b == 0xD2) return _readI32();
+    if (b == 0xD3) return _readI64();
     throw SCodecError('internal', 'msgpack: expected int, got 0x${b.toRadixString(16)}');
   }
 
@@ -112,6 +122,14 @@ class MsgPackReader implements SpecReader {
     final b = _readByte();
     if (b == 0xCA) return _readF32();
     if (b == 0xCB) return _readF64();
+    if (b <= 0x7F) return b.toDouble();
+    if (b >= 0xE0) return (b - 0x100).toDouble();
+    if (b == 0xCC) return _readByte().toDouble();
+    if (b == 0xCD) return _readU16().toDouble();
+    if (b == 0xCE) return _readU32().toDouble();
+    if (b == 0xD0) return _readByte().toSigned(8).toDouble();
+    if (b == 0xD1) return _readI16().toDouble();
+    if (b == 0xD2) return _readI32().toDouble();
     throw SCodecError('internal', 'msgpack: expected float, got 0x${b.toRadixString(16)}');
   }
 

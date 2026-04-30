@@ -1,13 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'scodec_error.dart';
 import 'spec_reader.dart';
-
-class SCodecError implements Exception {
-  final String code;
-  final String message;
-  SCodecError(this.code, this.message);
-  @override String toString() => 'SCodecError($code): $message';
-}
 
 class JsonReader implements SpecReader {
   final String _src;
@@ -102,6 +96,7 @@ class JsonReader implements SpecReader {
   }
 
   String _parseNumberRaw() {
+    _ws();
     final start = _pos;
     if (_pos < _src.length && _src[_pos] == '-') _pos++;
     if (_pos >= _src.length) throw SCodecError('internal', 'json: unexpected end of number');
@@ -172,7 +167,11 @@ class JsonReader implements SpecReader {
   int readUint64() {
     if (_peek() == '"') {
       final s = _parseString();
-      return int.tryParse(s) ?? (throw SCodecError('internal', 'json: invalid uint64: $s'));
+      final bi = BigInt.tryParse(s);
+      if (bi == null || bi < BigInt.zero) throw SCodecError('internal', 'json: invalid uint64: $s');
+      final lo = (bi & BigInt.from(0xFFFFFFFF)).toInt();
+      final hi = ((bi >> 32) & BigInt.from(0xFFFFFFFF)).toInt();
+      return (hi << 32) | lo;
     }
     final raw = _parseNumberRaw();
     return int.tryParse(raw) ?? (throw SCodecError('internal', 'json: invalid uint64: $raw'));
@@ -181,7 +180,10 @@ class JsonReader implements SpecReader {
   @override
   double readFloat32() {
     final raw = _parseNumberRaw();
-    return double.tryParse(raw) ?? (throw SCodecError('internal', 'json: invalid float32: $raw'));
+    final v = double.tryParse(raw) ?? (throw SCodecError('internal', 'json: invalid float32: $raw'));
+    final b = ByteData(4);
+    b.setFloat32(0, v);
+    return b.getFloat32(0);
   }
 
   @override

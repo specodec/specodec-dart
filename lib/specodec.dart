@@ -1,3 +1,4 @@
+export 'src/scodec_error.dart';
 export 'src/json_writer.dart';
 export 'src/json_reader.dart';
 export 'src/msgpack_writer.dart';
