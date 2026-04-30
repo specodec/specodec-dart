@@ -101,8 +101,8 @@ class MsgPackReader implements SpecReader {
 
   BigInt _readI64() {
     final u64 = _readU64();
-    if (u64 >= BigInt.from(0x8000000000000000)) {
-      return u64 - BigInt.from(0x10000000000000000);
+    if (u64 >= BigInt.parse('9223372036854775808')) {
+      return u64 - BigInt.parse('18446744073709551616');
     }
     return u64;
   }
