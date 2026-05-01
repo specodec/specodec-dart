@@ -16,13 +16,13 @@ class SpecCodec<T> {
 }
 
 // ---------------------------------------------------------------------------
-// FormatEntry
+// FormatEntry: a reader/writer factory pair for one format
 // ---------------------------------------------------------------------------
 class FormatEntry {
-  final String contentType;
+  final String name;   // e.g. "json", "msgpack", "gron"
   final SpecWriter Function() newWriter;
   final SpecReader Function(Uint8List) newReader;
-  const FormatEntry({required this.contentType, required this.newWriter, required this.newReader});
+  const FormatEntry({required this.name, required this.newWriter, required this.newReader});
 }
 
 // ---------------------------------------------------------------------------
@@ -36,10 +36,9 @@ class FormatRegistry {
     return this;
   }
 
-  FormatEntry match(String contentType) {
+  FormatEntry match(String format) {
     for (final e in _entries) {
-      final sub = e.contentType.contains('/') ? e.contentType.split('/')[1] : e.contentType;
-      if (contentType.contains(sub)) return e;
+      if (format.contains(e.name)) return e;
     }
     return _entries.first;
   }
@@ -49,29 +48,29 @@ class FormatRegistry {
 // Default registry
 // ---------------------------------------------------------------------------
 final defaultRegistry = FormatRegistry()
-  ..register(FormatEntry(contentType: 'application/json',    newWriter: JsonWriter.new,    newReader: JsonReader.new))
-  ..register(FormatEntry(contentType: 'application/msgpack', newWriter: MsgPackWriter.new, newReader: MsgPackReader.new))
-  ..register(FormatEntry(contentType: 'application/gron',    newWriter: GronWriter.new,    newReader: (b) => GronReader(b)));
+  ..register(FormatEntry(name: 'json',    newWriter: JsonWriter.new,    newReader: JsonReader.new))
+  ..register(FormatEntry(name: 'msgpack', newWriter: MsgPackWriter.new, newReader: MsgPackReader.new))
+  ..register(FormatEntry(name: 'gron',    newWriter: GronWriter.new,    newReader: (b) => GronReader(b)));
 
 // ---------------------------------------------------------------------------
 // dispatch / respond
 // ---------------------------------------------------------------------------
-T dispatch<T>(SpecCodec<T> codec, Uint8List body, String contentType, [FormatRegistry? registry]) {
+T dispatch<T>(SpecCodec<T> codec, Uint8List body, String format, [FormatRegistry? registry]) {
   final reg = registry ?? defaultRegistry;
-  final fmt = reg.match(contentType);
+  final fmt = reg.match(format);
   return codec.decode(fmt.newReader(body));
 }
 
 class RespondResult {
   final Uint8List body;
-  final String contentType;
-  const RespondResult({required this.body, required this.contentType});
+  final String name;   // format name: "json" | "msgpack" | "gron"
+  const RespondResult({required this.body, required this.name});
 }
 
-RespondResult respond<T>(SpecCodec<T> codec, T obj, String accept, [FormatRegistry? registry]) {
+RespondResult respond<T>(SpecCodec<T> codec, T obj, String format, [FormatRegistry? registry]) {
   final reg = registry ?? defaultRegistry;
-  final fmt = reg.match(accept);
+  final fmt = reg.match(format);
   final w = fmt.newWriter();
   codec.encode(w, obj);
-  return RespondResult(body: w.toBytes(), contentType: fmt.contentType);
+  return RespondResult(body: w.toBytes(), name: fmt.name);
 }
