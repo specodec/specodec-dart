@@ -1,7 +1,8 @@
+import 'spec_writer.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
-class JsonWriter {
+class JsonWriter implements SpecWriter {
   final List<String> _parts = [];
   final List<bool> _firstItem = [];
 
@@ -91,7 +92,7 @@ class JsonWriter {
     _parts.add('"${_escape(value)}"');
   }
 
-  void beginObject() {
+  void beginObject([int fieldCount = 0]) {
     _parts.add('{');
     _firstItem.add(true);
   }
@@ -108,7 +109,7 @@ class JsonWriter {
     _parts.add('}');
   }
 
-  void beginArray() {
+  void beginArray([int elementCount = 0]) {
     _parts.add('[');
     _firstItem.add(true);
   }

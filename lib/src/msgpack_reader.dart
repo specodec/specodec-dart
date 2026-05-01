@@ -267,6 +267,13 @@ class MsgPackReader implements SpecReader {
     if (b == 0xCC) return BigInt.from(_readByte());
     if (b == 0xCD) return BigInt.from(_readU16());
     if (b == 0xCE) return BigInt.from(_readU32());
+    if (b == 0xCF) {
+      final u64 = _readU64();
+      if (u64 >= BigInt.parse('9223372036854775808')) {
+        return u64 - BigInt.parse('18446744073709551616');
+      }
+      return u64;
+    }
     if (b == 0xD0) return BigInt.from(_readByte().toSigned(8));
     if (b == 0xD1) return BigInt.from(_readI16());
     if (b == 0xD2) return BigInt.from(_readI32());

@@ -1,4 +1,7 @@
-class GronWriter {
+import 'dart:typed_data';
+import 'spec_writer.dart';
+
+class GronWriter implements SpecWriter {
   final List<String> _lines = [];
   final List<String> _segments = ["json"];
   final List<_NestInfo> _nesting = [];
@@ -54,15 +57,9 @@ class GronWriter {
   void writeString(String value) => _emit('"${_escape(value)}"');
   void writeBool(bool value) => _emit(value ? "true" : "false");
   void writeInt32(int value) => _emit('$value');
-  void writeInt64(int value) => _emit('"$value"');
+  void writeInt64(BigInt value) => _emit('"$value"');
   void writeUint32(int value) => _emit('$value');
-  void writeUint64(int value) {
-    if (value < 0) {
-      _emit('"${(BigInt.from(value) + BigInt.parse('18446744073709551616'))}"');
-    } else {
-      _emit('"$value"');
-    }
-  }
+  void writeUint64(BigInt value) => _emit('"$value"');
 
   void writeFloat32(double value) {
     if (value.isNaN || value.isInfinite) throw StateError("NaN/Infinity");
@@ -124,7 +121,9 @@ class GronWriter {
     while (_segments.length > info.depth) _segments.removeLast();
   }
 
-  List<int> toBytes() => '${_lines.join('\n')}\n'.codeUnits;
+  void writeEnum(String value) { _emit('"${_escape(value)}"'); }
+
+  Uint8List toBytes() => Uint8List.fromList('${_lines.join('\n')}\n'.codeUnits);
 }
 
 class _NestInfo {

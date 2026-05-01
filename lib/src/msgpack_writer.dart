@@ -1,7 +1,8 @@
+import 'spec_writer.dart';
 import 'dart:typed_data';
 import 'dart:convert';
 
-class MsgPackWriter {
+class MsgPackWriter implements SpecWriter {
   final List<int> _buf = [];
 
   void _writeByte(int b) { _buf.add(b & 0xFF); }

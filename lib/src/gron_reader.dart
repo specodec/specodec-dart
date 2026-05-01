@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'spec_reader.dart';
 
-class GronReader {
+class GronReader implements SpecReader {
   final List<_Line> _lines = [];
   int _cursor = 0;
   final List<_Ctx> _ctx = [];
@@ -72,6 +73,7 @@ class GronReader {
 
   void readNull() { _cursor++; }
   Uint8List readBytes() => _b64decode(_unescape(_lines[_cursor++].val));
+  String readEnum() => _unescape(_lines[_cursor++].val);
 
   void beginObject() {
     final line = _lines[_cursor++];

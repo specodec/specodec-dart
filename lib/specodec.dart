@@ -6,4 +6,5 @@ export 'src/msgpack_reader.dart';
 export 'src/gron_writer.dart';
 export 'src/gron_reader.dart';
 export 'src/spec_reader.dart';
+export 'src/spec_writer.dart';
 export 'src/spec_codec.dart';
