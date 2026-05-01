@@ -1,6 +1,7 @@
 import 'spec_writer.dart';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'float_fmt.dart';
 
 class JsonWriter implements SpecWriter {
   final List<String> _parts = [];
@@ -70,7 +71,7 @@ class JsonWriter implements SpecWriter {
     if (value.isNaN || value.isInfinite) {
       throw ArgumentError('float32: NaN/Infinity not valid JSON');
     }
-    _parts.add(_fmtFloat(value));
+    _parts.add(fmtFloat32(value));
   }
 
   void writeFloat64(double value) {

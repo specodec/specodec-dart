@@ -94,7 +94,6 @@ class GronReader implements SpecReader {
     return _lines[_cursor].path.substring(pfx.length);
   }
 
-  void nextFieldSeparator() {}
   void endObject() { _ctx.removeLast(); }
 
   void beginArray() {
@@ -111,7 +110,6 @@ class GronReader implements SpecReader {
     return p == exp || p.startsWith("$exp.") || p.startsWith("$exp[");
   }
 
-  void nextElementSeparator() {}
   void nextElement() { _ctx.last.index++; }
   void endArray() { _ctx.removeLast(); }
 
