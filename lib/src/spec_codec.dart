@@ -38,7 +38,7 @@ class FormatRegistry {
 
   FormatEntry match(String format) {
     for (final e in _entries) {
-      if (format.contains(e.name)) return e;
+      if (format == e.name) return e;
     }
     return _entries.first;
   }
