@@ -61,13 +61,14 @@ class GronReader implements SpecReader {
 
   double readFloat32() {
     final v = _lines[_cursor++].val;
-    if (v == "-0") return -0.0;
-    return double.parse(v);
+    final f = double.parse(v);
+    final b = ByteData(4);
+    b.setFloat32(0, f);
+    return b.getFloat32(0);
   }
 
   double readFloat64() {
     final v = _lines[_cursor++].val;
-    if (v == "-0") return -0.0;
     return double.parse(v);
   }
 

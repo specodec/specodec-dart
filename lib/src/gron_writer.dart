@@ -63,16 +63,16 @@ class GronWriter implements SpecWriter {
   void writeUint64(BigInt value) => _emit('"$value"');
 
   void writeFloat32(double value) {
-    if (value.isNaN || value.isInfinite) throw StateError("NaN/Infinity");
-    _emit(fmtFloat32(value));
+    final f32List = Float32List(1);
+    f32List[0] = value;
+    final f32 = f32List[0];
+    if (f32.isNaN || f32.isInfinite) throw StateError("NaN/Infinity");
+    _emit(formatFloat32(value));
   }
 
   void writeFloat64(double value) {
     if (value.isNaN || value.isInfinite) throw StateError("NaN/Infinity");
-    if (value == 0.0 && value.isNegative) { _emit("-0"); return; }
-    final s = value.toString();
-    _emit(s.contains('.') && !s.contains('E') && !s.contains('e')
-        ? s.replaceAll(RegExp(r'\.?0+$'), '') : s);
+    _emit(formatFloat64(value));
   }
 
   void writeNull() => _emit("null");

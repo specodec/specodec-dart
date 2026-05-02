@@ -58,27 +58,21 @@ class JsonWriter implements SpecWriter {
     _parts.add('"$value"');
   }
 
-  String _fmtFloat(double value) {
-    var s = '$value';
-    if (s.contains('.') && !s.contains('e', 0) && !s.contains('E', 0)) {
-      s = s.replaceAll(RegExp(r'0+$'), '');
-      s = s.replaceAll(RegExp(r'\.$'), '');
-    }
-    return s;
-  }
-
   void writeFloat32(double value) {
-    if (value.isNaN || value.isInfinite) {
+    final f32List = Float32List(1);
+    f32List[0] = value;
+    final f32 = f32List[0];
+    if (f32.isNaN || f32.isInfinite) {
       throw ArgumentError('float32: NaN/Infinity not valid JSON');
     }
-    _parts.add(fmtFloat32(value));
+    _parts.add(formatFloat32(value));
   }
 
   void writeFloat64(double value) {
     if (value.isNaN || value.isInfinite) {
       throw ArgumentError('float64: NaN/Infinity not valid JSON');
     }
-    _parts.add(_fmtFloat(value));
+    _parts.add(formatFloat64(value));
   }
 
   void writeNull() {

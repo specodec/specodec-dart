@@ -296,7 +296,12 @@ class MsgPackReader implements SpecReader {
   }
 
   @override
-  double readFloat32() => readFloat();
+  double readFloat32() {
+    final v = readFloat();
+    final b = ByteData(4);
+    b.setFloat32(0, v);
+    return b.getFloat32(0);
+  }
 
   @override
   double readFloat64() => readFloat();
