@@ -1,11 +1,11 @@
-// Float64 configuration constants
+import "dart:typed_data";
+import 'tables_f64.dart';
+import 'ryu_math.dart';
+
 const int DOUBLE_MANTISSA_BITS = 52;
 const int DOUBLE_BIAS = 1023;
 const int DOUBLE_POW5_INV_BITCOUNT = 125;
 const int DOUBLE_POW5_BITCOUNT = 125;
-
-import 'tables_f64.dart';
-import 'ryu_math.dart';
 
 String float64ToString(double d) {
   ByteData bd = ByteData(8);
@@ -13,158 +13,98 @@ String float64ToString(double d) {
   int bitsInt = bd.getUint64(0, Endian.big);
   BigInt bits = BigInt.from(bitsInt);
   
-  bool sign = (bits >> 63) != BigInt.zero;
+  BigInt sign = bits >> 63;
   BigInt ieeeMantissa = bits & BigInt.from(0xFFFFFFFFFFFFF);
   int ieeeExponent = ((bits >> 52) & BigInt.from(0x7FF)).toInt();
   
   if (ieeeExponent == 2047) {
-    if (ieeeMantissa == BigInt.zero) return sign ? "-Infinity" : "Infinity";
+    if (ieeeMantissa == BigInt.zero) {
+      return sign == BigInt.one ? "-Infinity" : "Infinity";
+    }
     return "NaN";
   }
+  
   if (ieeeExponent == 0 && ieeeMantissa == BigInt.zero) {
-    return sign ? "-0E0" : "0E0";
+    return sign == BigInt.one ? "-0E0" : "0E0";
   }
   
-  int e2 = ieeeExponent == 0 
-    ? 1 - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS - 2
-    : ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS - 2;
+  int e2;
+  BigInt m2;
+  if (ieeeExponent == 0) {
+    e2 = 1 - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
+    m2 = ieeeMantissa;
+  } else {
+    e2 = ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
+    m2 = (BigInt.one << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
+  }
   
-  BigInt m2 = ieeeExponent == 0 ? ieeeMantissa : (BigInt.one << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
-  bool even = (m2 & BigInt.one) == BigInt.zero;
-  bool acceptBounds = even;
+  bool signBit = sign == BigInt.one;
+  BigInt m2shifted = m2 << 8;
   
-  BigInt mv = m2 * BigInt.from(4);
-  BigInt mp = mv + BigInt.from(2);
-  int mmShift = (ieeeMantissa != BigInt.zero || ieeeExponent <= 1) ? 1 : 0;
-  BigInt mm = mv - BigInt.one - BigInt.from(mmShift);
+  if (e2 < -1074) {
+    return signBit ? "-0E0" : "0E0";
+  }
   
-  bool vrIsTrailingZeros = false;
-  bool vmIsTrailingZeros = false;
-  BigInt lastDigit = BigInt.zero;
+  BigInt vr, vp, vm;
   int e10;
-  BigInt vr, vp, vm_;
   
   if (e2 >= 0) {
-    int q = log10Pow2(e2);
+    int q = log10Pow2_64(e2);
     e10 = q;
-    int k = DOUBLE_POW5_INV_BITCOUNT + pow5bits(q) - 1;
+    int k = DOUBLE_POW5_INV_BITCOUNT + pow5bits_64(q) - 1;
     int i = -e2 + q + k;
+    vr = mulPow5InvDivPow2_64(m2shifted, q, i);
+    int j = q - k;
+    vp = mulPow5InvDivPow2_64(BigInt.from(4) * m2shifted - BigInt.from(2), q, i);
+    vm = mulPow5InvDivPow2_64(BigInt.from(4) * m2shifted + BigInt.from(2), q, i);
     
-    vr = mulShift64(mv, DOUBLE_POW5_INV_SPLIT[q], i);
-    vp = mulShift64(mp, DOUBLE_POW5_INV_SPLIT[q], i);
-    vm_ = mulShift64(mm, DOUBLE_POW5_INV_SPLIT[q], i);
-    
-    if (q != 0 && (vp - BigInt.one) ~/ BigInt.from(10) <= vm_ ~/ BigInt.from(10)) {
-      int l = DOUBLE_POW5_INV_BITCOUNT + pow5bits(q - 1) - 1;
-      lastDigit = mulShift64(mv, DOUBLE_POW5_INV_SPLIT[q - 1], -e2 + q - 1 + l) % BigInt.from(10);
-    }
-    
-    if (q <= 21) {
-      if (mv % BigInt.from(5) == BigInt.zero) {
-        vrIsTrailingZeros = multipleOfPowerOf5_64(mv, q);
-      } else if (acceptBounds) {
-        vmIsTrailingZeros = multipleOfPowerOf5_64(mm, q);
-      } else {
-        if (multipleOfPowerOf5_64(mp, q)) vp = vp - BigInt.one;
-      }
+    if (j >= 0) {
+      BigInt pow10 = POW10_64[j];
+      vr = vr * pow10;
+      vp = vp * pow10;
+      vm = vm * pow10;
+    } else {
+      vr = vr >> BigInt.from(-j);
+      vp = vp >> BigInt.from(-j);
+      vm = vm >> BigInt.from(-j);
     }
   } else {
-    int q = log10Pow5(-e2);
+    int q = log10Pow5_64(-e2);
     e10 = q + e2;
     int i = -e2 - q;
-    int k = pow5bits(i) - DOUBLE_POW5_BITCOUNT;
+    int k = pow5bits_64(i) - DOUBLE_POW5_BITCOUNT;
     int j = q - k;
+    vr = mulPow5DivPow2_64(m2shifted, i, j);
+    vp = mulPow5DivPow2_64(BigInt.from(4) * m2shifted - BigInt.from(2), i, j);
+    vm = mulPow5DivPow2_64(BigInt.from(4) * m2shifted + BigInt.from(2), i, j);
     
-    vr = mulShift64(mv, DOUBLE_POW5_SPLIT[i], j);
-    vp = mulShift64(mp, DOUBLE_POW5_SPLIT[i], j);
-    vm_ = mulShift64(mm, DOUBLE_POW5_SPLIT[i], j);
-    
-    if (q != 0 && (vp - BigInt.one) ~/ BigInt.from(10) <= vm_ ~/ BigInt.from(10)) {
-      int j2 = q - 1 - (pow5bits(i + 1) - DOUBLE_POW5_BITCOUNT);
-      lastDigit = mulShift64(mv, DOUBLE_POW5_SPLIT[i + 1], j2) % BigInt.from(10);
-    }
-    
-    if (q <= 1) {
-      vrIsTrailingZeros = true;
-      if (acceptBounds) {
-        vmIsTrailingZeros = mmShift == 1;
-      } else {
-        vp = vp - BigInt.one;
-      }
-    } else if (q < 63) {
-      vrIsTrailingZeros = multipleOfPowerOf2_64(mv, q - 1);
-      if (acceptBounds) {
-        vmIsTrailingZeros = multipleOfPowerOf5_64(mm, q);
-      } else {
-        if (multipleOfPowerOf5_64(mp, q)) vp = vp - BigInt.one;
-      }
+    if (j >= 0) {
+      BigInt pow10 = POW10_64[j];
+      vr = vr * pow10;
+      vp = vp * pow10;
+      vm = vm * pow10;
     }
   }
   
   int removed = 0;
-  BigInt vr2 = vr, vp2 = vp, vm2 = vm_;
+  int lastRemovedDigit = 0;
   
-  if (vmIsTrailingZeros || vrIsTrailingZeros) {
-    while (vp2 ~/ BigInt.from(10) > vm2 ~/ BigInt.from(10)) {
-      vmIsTrailingZeros = vmIsTrailingZeros && (vm2 % BigInt.from(10) == BigInt.zero);
-      vrIsTrailingZeros = vrIsTrailingZeros && (lastDigit == BigInt.zero);
-      lastDigit = vr2 % BigInt.from(10);
-      vr2 = vr2 ~/ BigInt.from(10);
-      vp2 = vp2 ~/ BigInt.from(10);
-      vm2 = vm2 ~/ BigInt.from(10);
-      removed++;
-    }
-    
-    if (vmIsTrailingZeros) {
-      while (vm2 % BigInt.from(10) == BigInt.zero) {
-        vrIsTrailingZeros = vrIsTrailingZeros && (lastDigit == BigInt.zero);
-        lastDigit = vr2 % BigInt.from(10);
-        vr2 = vr2 ~/ BigInt.from(10);
-        vp2 = vp2 ~/ BigInt.from(10);
-        vm2 = vm2 ~/ BigInt.from(10);
-        removed++;
-      }
-    }
-    
-    if (vrIsTrailingZeros && lastDigit == BigInt.from(5) && (vr2 & BigInt.one) == BigInt.zero) {
-      lastDigit = BigInt.from(4);
-    }
-    
-    bool roundUp = (vr2 == vm2 && (!acceptBounds || !vmIsTrailingZeros)) || lastDigit >= BigInt.from(5);
-    BigInt output = roundUp ? vr2 + BigInt.one : vr2;
-    int exp = e10 + removed;
-    int olength = decimalLength17(output);
-    
-    String result = sign ? "-" : "";
-    String digits = output.toString();
-    if (olength == 1) {
-      result += digits;
-    } else {
-      result += digits[0] + "." + digits.substring(1);
-    }
-    result += "E" + (exp + olength - 1).toString();
-    return result;
+  while ((vp / BigInt.from(10)) > (vm / BigInt.from(10))) {
+    lastRemovedDigit = (vr % BigInt.from(10)).toInt();
+    vr = vr / BigInt.from(10);
+    vp = vp / BigInt.from(10);
+    vm = vm / BigInt.from(10);
+    removed++;
+  }
+  
+  int exp = e10 + removed;
+  
+  String result = "${signBit ? '-' : ''}${vr}";
+  
+  if (exp >= 10) {
+    String expStr = exp.toString();
+    return "$resultE${exp >= 0 ? '+' : ''}$expStr";
   } else {
-    while (vp2 ~/ BigInt.from(10) > vm2 ~/ BigInt.from(10)) {
-      lastDigit = vr2 % BigInt.from(10);
-      vr2 = vr2 ~/ BigInt.from(10);
-      vp2 = vp2 ~/ BigInt.from(10);
-      vm2 = vm2 ~/ BigInt.from(10);
-      removed++;
-    }
-    
-    BigInt output = (vr2 == vm2 || lastDigit >= BigInt.from(5)) ? vr2 + BigInt.one : vr2;
-    int exp = e10 + removed;
-    int olength = decimalLength17(output);
-    
-    String result = sign ? "-" : "";
-    String digits = output.toString();
-    if (olength == 1) {
-      result += digits;
-    } else {
-      result += digits[0] + "." + digits.substring(1);
-    }
-    result += "E" + (exp + olength - 1).toString();
-    return result;
+    return "$resultE${exp >= 0 ? '+' : ''}$exp";
   }
 }
