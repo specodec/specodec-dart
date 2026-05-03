@@ -103,25 +103,67 @@ String float32ToString(double f) {
   int removed = 0;
   BigInt vr2 = vr, vp2 = vp, vm2 = vm_;
   
-  while (vp2 ~/ BigInt.from(10) > vm2 ~/ BigInt.from(10)) {
-    lastDigit = vr2 % BigInt.from(10);
-    vr2 = vr2 ~/ BigInt.from(10);
-    vp2 = vp2 ~/ BigInt.from(10);
-    vm2 = vm2 ~/ BigInt.from(10);
-    removed++;
-  }
-  
-  BigInt output = (vr2 == vm2 || lastDigit >= BigInt.from(5)) ? vr2 + BigInt.one : vr2;
-  int exp = e10 + removed;
-  int olength = decimalLength17(output);
-  
-  String result = sign ? "-" : "";
-  String digits = output.toString();
-  if (olength == 1) {
-    result += digits;
+  if (vmIsTrailingZeros || vrIsTrailingZeros) {
+    while (vp2 ~/ BigInt.from(10) > vm2 ~/ BigInt.from(10)) {
+      vmIsTrailingZeros = vmIsTrailingZeros && (vm2 % BigInt.from(10) == BigInt.zero);
+      vrIsTrailingZeros = vrIsTrailingZeros && (lastDigit == BigInt.zero);
+      lastDigit = vr2 % BigInt.from(10);
+      vr2 = vr2 ~/ BigInt.from(10);
+      vp2 = vp2 ~/ BigInt.from(10);
+      vm2 = vm2 ~/ BigInt.from(10);
+      removed++;
+    }
+    
+    if (vmIsTrailingZeros) {
+      while (vm2 % BigInt.from(10) == BigInt.zero) {
+        vrIsTrailingZeros = vrIsTrailingZeros && (lastDigit == BigInt.zero);
+        lastDigit = vr2 % BigInt.from(10);
+        vr2 = vr2 ~/ BigInt.from(10);
+        vp2 = vp2 ~/ BigInt.from(10);
+        vm2 = vm2 ~/ BigInt.from(10);
+        removed++;
+      }
+    }
+    
+    if (vrIsTrailingZeros && lastDigit == BigInt.from(5) && (vr2 & BigInt.one) == BigInt.zero) {
+      lastDigit = BigInt.from(4);
+    }
+    
+    bool roundUp = (vr2 == vm2 && (!acceptBounds || !vmIsTrailingZeros)) || lastDigit >= BigInt.from(5);
+    BigInt output = roundUp ? vr2 + BigInt.one : vr2;
+    int exp = e10 + removed;
+    int olength = decimalLength17(output);
+    
+    String result = sign ? "-" : "";
+    String digits = output.toString();
+    if (olength == 1) {
+      result += digits;
+    } else {
+      result += digits[0] + "." + digits.substring(1);
+    }
+    result += "E" + (exp + olength - 1).toString();
+    return result;
   } else {
-    result += digits[0] + "." + digits.substring(1);
+    while (vp2 ~/ BigInt.from(10) > vm2 ~/ BigInt.from(10)) {
+      lastDigit = vr2 % BigInt.from(10);
+      vr2 = vr2 ~/ BigInt.from(10);
+      vp2 = vp2 ~/ BigInt.from(10);
+      vm2 = vm2 ~/ BigInt.from(10);
+      removed++;
+    }
+    
+    BigInt output = (vr2 == vm2 || lastDigit >= BigInt.from(5)) ? vr2 + BigInt.one : vr2;
+    int exp = e10 + removed;
+    int olength = decimalLength17(output);
+    
+    String result = sign ? "-" : "";
+    String digits = output.toString();
+    if (olength == 1) {
+      result += digits;
+    } else {
+      result += digits[0] + "." + digits.substring(1);
+    }
+    result += "E" + (exp + olength - 1).toString();
+    return result;
   }
-  result += "E" + (exp + olength - 1).toString();
-  return result;
 }
