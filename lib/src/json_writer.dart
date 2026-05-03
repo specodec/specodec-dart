@@ -62,17 +62,23 @@ class JsonWriter implements SpecWriter {
     final f32List = Float32List(1);
     f32List[0] = value;
     final f32 = f32List[0];
-    if (f32.isNaN || f32.isInfinite) {
-      throw ArgumentError('float32: NaN/Infinity not valid JSON');
+    if (f32.isNaN) {
+      _parts.add('"NaN"');
+    } else if (f32.isInfinite) {
+      _parts.add(f32 > 0 ? '"Infinity"' : '"-Infinity"');
+    } else {
+      _parts.add(formatFloat32(value));
     }
-    _parts.add(formatFloat32(value));
   }
 
   void writeFloat64(double value) {
-    if (value.isNaN || value.isInfinite) {
-      throw ArgumentError('float64: NaN/Infinity not valid JSON');
+    if (value.isNaN) {
+      _parts.add('"NaN"');
+    } else if (value.isInfinite) {
+      _parts.add(value > 0 ? '"Infinity"' : '"-Infinity"');
+    } else {
+      _parts.add(formatFloat64(value));
     }
-    _parts.add(formatFloat64(value));
   }
 
   void writeNull() {

@@ -177,6 +177,16 @@ class JsonReader implements SpecReader {
 
   @override
   double readFloat32() {
+    if (_peek() == '"') {
+      final s = _parseString();
+      if (s == 'NaN') return double.nan;
+      if (s == 'Infinity') return double.infinity;
+      if (s == '-Infinity') return double.negativeInfinity;
+      final v = double.tryParse(s) ?? (throw SCodecError('internal', 'json: invalid float32: $s'));
+      final b = ByteData(4);
+      b.setFloat32(0, v);
+      return b.getFloat32(0);
+    }
     final raw = _parseNumberRaw();
     final v = double.tryParse(raw) ?? (throw SCodecError('internal', 'json: invalid float32: $raw'));
     final b = ByteData(4);
@@ -186,6 +196,13 @@ class JsonReader implements SpecReader {
 
   @override
   double readFloat64() {
+    if (_peek() == '"') {
+      final s = _parseString();
+      if (s == 'NaN') return double.nan;
+      if (s == 'Infinity') return double.infinity;
+      if (s == '-Infinity') return double.negativeInfinity;
+      return double.tryParse(s) ?? (throw SCodecError('internal', 'json: invalid float64: $s'));
+    }
     final raw = _parseNumberRaw();
     return double.tryParse(raw) ?? (throw SCodecError('internal', 'json: invalid float64: $raw'));
   }

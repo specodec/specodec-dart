@@ -1,7 +1,11 @@
 name: emit_dart
-version: 0.0.1
+version: 1.0.0
+
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: '>=3.0.0 <4.0.0'
+
 dependencies:
   specodec:
-    path: /specodec-dart
+    git:
+      url: https://github.com/specodec/specodec-runtime-dart
+  path: ^1.8.0

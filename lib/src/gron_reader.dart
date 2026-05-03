@@ -61,6 +61,9 @@ class GronReader implements SpecReader {
 
   double readFloat32() {
     final v = _lines[_cursor++].val;
+    if (v == '"NaN"') return double.nan;
+    if (v == '"Infinity"') return double.infinity;
+    if (v == '"-Infinity"') return double.negativeInfinity;
     final f = double.parse(v);
     final b = ByteData(4);
     b.setFloat32(0, f);
@@ -69,6 +72,9 @@ class GronReader implements SpecReader {
 
   double readFloat64() {
     final v = _lines[_cursor++].val;
+    if (v == '"NaN"') return double.nan;
+    if (v == '"Infinity"') return double.infinity;
+    if (v == '"-Infinity"') return double.negativeInfinity;
     return double.parse(v);
   }
 
@@ -108,10 +114,11 @@ class GronReader implements SpecReader {
     final ni = arr.index + 1;
     final exp = "${arr.prefix}[$ni]";
     final p = _lines[_cursor].path;
-    return p == exp || p.startsWith("$exp.") || p.startsWith("$exp[");
+    final hasNext = p == exp || p.startsWith("$exp.") || p.startsWith("$exp[");
+    if (hasNext) arr.index = ni;
+    return hasNext;
   }
 
-  void nextElement() { _ctx.last.index++; }
   void endArray() { _ctx.removeLast(); }
 
   bool isNull() => _cursor < _lines.length && _lines[_cursor].val == "null";
