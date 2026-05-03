@@ -14,7 +14,7 @@ packages:
     description:
       path: "."
       ref: HEAD
-      resolved-ref: f7fe8795637a778fb365cf7a3f721b2c43de351b
+      resolved-ref: c6c4c614aac34abcde19e4b041e3f645ac8eaff1
       url: "https://github.com/specodec/specodec-runtime-dart"
     source: git
     version: "0.0.1"

@@ -1,3 +1,5 @@
+library specodec_all_types;
+
 import 'dart:typed_data';
 import 'package:specodec/specodec.dart';
 
@@ -5694,7 +5696,7 @@ void _writeRecList(SpecWriter w, RecList obj) {
   w.endObject();
 }
 
-final RecListCodec = SpecCodec<RecList>(
+final SpecCodec<RecList> RecListCodec = SpecCodec<RecList>(
   encode: (w, obj) => _writeRecList(w, obj),
   decode: (r) {
     int _value = 0;
@@ -5730,7 +5732,7 @@ void _writeRecTree(SpecWriter w, RecTree obj) {
   w.endObject();
 }
 
-final RecTreeCodec = SpecCodec<RecTree>(
+final SpecCodec<RecTree> RecTreeCodec = SpecCodec<RecTree>(
   encode: (w, obj) => _writeRecTree(w, obj),
   decode: (r) {
     String _value = '';
@@ -5767,7 +5769,7 @@ void _writeRecChain(SpecWriter w, RecChain obj) {
   w.endObject();
 }
 
-final RecChainCodec = SpecCodec<RecChain>(
+final SpecCodec<RecChain> RecChainCodec = SpecCodec<RecChain>(
   encode: (w, obj) => _writeRecChain(w, obj),
   decode: (r) {
     int _id = 0;
@@ -5802,7 +5804,7 @@ void _writeRecWrap(SpecWriter w, RecWrap obj) {
   w.endObject();
 }
 
-final RecWrapCodec = SpecCodec<RecWrap>(
+final SpecCodec<RecWrap> RecWrapCodec = SpecCodec<RecWrap>(
   encode: (w, obj) => _writeRecWrap(w, obj),
   decode: (r) {
     Uint8List _payload = Uint8List(0);
@@ -5839,7 +5841,7 @@ void _writeRecWide(SpecWriter w, RecWide obj) {
   w.endObject();
 }
 
-final RecWideCodec = SpecCodec<RecWide>(
+final SpecCodec<RecWide> RecWideCodec = SpecCodec<RecWide>(
   encode: (w, obj) => _writeRecWide(w, obj),
   decode: (r) {
     int _a = 0;

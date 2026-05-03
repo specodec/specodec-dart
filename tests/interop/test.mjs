@@ -36,13 +36,38 @@ run(`cd ${__dir} && node_modules/.bin/tsp compile ${CACHE}/alltypes.tsp --emit=@
 const dartFiles = readdirSync(EMIT_GEN).filter(f => f.endsWith('.dart'));
 if (dartFiles.length > 0) {
   console.log(`  ✓ Generated ${dartFiles.join(', ')}`);
+  
+  // Create proper Dart package structure
+  mkdirSync(join(EMIT_GEN, 'specodec_all_types'), { recursive: true });
+  for (const f of dartFiles) {
+    const src = join(EMIT_GEN, f);
+    const dest = join(EMIT_GEN, 'specodec_all_types', f);
+    let content = readFileSync(src, 'utf-8');
+    content = `library specodec_all_types;\n\n` + content;
+    writeFileSync(dest, content);
+    rmSync(src);
+  }
+  console.log(`  ✓ Created specodec_all_types package`);
+
+  // Fix recursive type inference
+  const typesFile = join(EMIT_GEN, 'specodec_all_types', dartFiles[0]);
+  let typesContent = readFileSync(typesFile, 'utf-8');
+  for (const rec of ['RecList','RecTree','RecChain','RecWrap','RecWide']) {
+    typesContent = typesContent.replace(
+      new RegExp(`final ${rec}Codec = `, 'g'),
+      `final SpecCodec<${rec}> ${rec}Codec = `
+    );
+  }
+  writeFileSync(typesFile, typesContent);
+  console.log(`  ✓ Fixed recursive type inference`);
 } else {
   console.error('  FAIL: No generated Dart files');
   process.exit(1);
 }
 
 console.log('\n=== Step 5: Generate test runner ===');
-run(`cd ${__dir}/emit && VEC_DIR=${VEC_DIR} node generate_emit_runner.mjs`);
+mkdirSync(join(__dir, 'emit'), { recursive: true });
+run(`cd ${__dir} && VEC_DIR=${VEC_DIR} node generate_emit_runner.mjs`);
 
 console.log('\n=== Step 6: Setup pubspec.yaml ===');
 const pubspec = `name: emit_dart

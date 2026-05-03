@@ -1,8 +1,8 @@
-FROM dhi.io/dart:3-alpine3.22-dev AS builder
+FROM dev:all AS builder
 WORKDIR /app
 ARG HTTP_PROXY HTTPS_PROXY http_proxy https_proxy ALL_PROXY all_proxy
 ENV http_proxy=${HTTP_PROXY} https_proxy=${HTTPS_PROXY} HTTP_PROXY=${HTTP_PROXY} HTTPS_PROXY=${HTTPS_PROXY} ALL_PROXY=${ALL_PROXY}
-RUN apk add --no-cache git
+ENV PATH="/root/.local/share/mise/shims:$PATH"
 COPY pubspec.yaml ./
 RUN --mount=type=cache,target=/root/.pub-cache \
     dart pub get

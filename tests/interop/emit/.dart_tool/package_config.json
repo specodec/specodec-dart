@@ -3,13 +3,13 @@
   "packages": [
     {
       "name": "path",
-      "rootUri": "file:///home/ytr/.pub-cache/hosted/pub.dev/path-1.9.1",
+      "rootUri": "file:///root/.pub-cache/hosted/pub.dev/path-1.9.1",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
     {
       "name": "specodec",
-      "rootUri": "file:///home/ytr/.pub-cache/git/specodec-runtime-dart-f7fe8795637a778fb365cf7a3f721b2c43de351b/",
+      "rootUri": "file:///root/.pub-cache/git/specodec-runtime-dart-c6c4c614aac34abcde19e4b041e3f645ac8eaff1/",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },
@@ -21,6 +21,6 @@
     }
   ],
   "generator": "pub",
-  "generatorVersion": "3.11.4",
-  "pubCache": "file:///home/ytr/.pub-cache"
+  "generatorVersion": "3.11.5",
+  "pubCache": "file:///root/.pub-cache"
 }

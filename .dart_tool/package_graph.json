@@ -1,0 +1,14 @@
+{
+  "roots": [
+    "specodec"
+  ],
+  "packages": [
+    {
+      "name": "specodec",
+      "version": "0.0.1",
+      "dependencies": [],
+      "devDependencies": []
+    }
+  ],
+  "configVersion": 1
+}
