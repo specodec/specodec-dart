@@ -4,7 +4,7 @@ ARG HTTP_PROXY HTTPS_PROXY http_proxy https_proxy ALL_PROXY all_proxy
 ENV http_proxy=${HTTP_PROXY} https_proxy=${HTTPS_PROXY} HTTP_PROXY=${HTTP_PROXY} HTTPS_PROXY=${HTTPS_PROXY} ALL_PROXY=${ALL_PROXY}
 
 COPY --from=emit_dart_src pubspec.yaml ./
-COPY --from=specodec-dart . /specodec-dart/
+COPY --from=specodec-runtime-dart . /specodec-dart/
 RUN mkdir -p lib
 COPY --from=emit_gen test_service_types.dart lib/
 RUN --mount=type=cache,target=/root/.pub-cache \

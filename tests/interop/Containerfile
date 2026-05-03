@@ -3,7 +3,7 @@ WORKDIR /app
 ARG HTTP_PROXY HTTPS_PROXY http_proxy https_proxy ALL_PROXY all_proxy
 ENV http_proxy=${HTTP_PROXY} https_proxy=${HTTPS_PROXY} HTTP_PROXY=${HTTP_PROXY} HTTPS_PROXY=${HTTPS_PROXY} ALL_PROXY=${ALL_PROXY}
 COPY --from=run pubspec.yaml ./
-COPY --from=specodec-dart . /specodec-dart/
+COPY --from=specodec-runtime-dart . /specodec-dart/
 COPY --from=run bin/ bin/
 COPY --from=vectors . /app/vectors/
 COPY --from=output_ts . /app/output_ts/
