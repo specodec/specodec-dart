@@ -1,0 +1,21 @@
+{
+  "roots": [
+    "run_dart"
+  ],
+  "packages": [
+    {
+      "name": "run_dart",
+      "version": "0.0.1",
+      "dependencies": [
+        "specodec"
+      ],
+      "devDependencies": []
+    },
+    {
+      "name": "specodec",
+      "version": "0.0.1",
+      "dependencies": []
+    }
+  ],
+  "configVersion": 1
+}
