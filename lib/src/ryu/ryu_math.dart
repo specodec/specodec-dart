@@ -10,15 +10,15 @@ int log10Pow5(int e) {
   return (e * 732923) ~/ 1048576;
 }
 
-int decimalLength9(int v) {
-  if (v >= 100000000) return 9;
-  if (v >= 10000000) return 8;
-  if (v >= 1000000) return 7;
-  if (v >= 100000) return 6;
-  if (v >= 10000) return 5;
-  if (v >= 1000) return 4;
-  if (v >= 100) return 3;
-  if (v >= 10) return 2;
+int decimalLength9(BigInt v) {
+  if (v >= BigInt.from(100000000)) return 9;
+  if (v >= BigInt.from(10000000)) return 8;
+  if (v >= BigInt.from(1000000)) return 7;
+  if (v >= BigInt.from(100000)) return 6;
+  if (v >= BigInt.from(10000)) return 5;
+  if (v >= BigInt.from(1000)) return 4;
+  if (v >= BigInt.from(100)) return 3;
+  if (v >= BigInt.from(10)) return 2;
   return 1;
 }
 
@@ -71,5 +71,21 @@ bool multipleOfPowerOf5_64(BigInt value, int q) {
 bool multipleOfPowerOf2_64(BigInt value, int q) {
   if (q == 0) return true;
   if (q >= 64) return value == BigInt.zero;
+  return (value & ((BigInt.one << q) - BigInt.one)) == BigInt.zero;
+}
+
+bool multipleOfPowerOf5_32(BigInt value, int q) {
+  if (q == 0) return true;
+  if (q >= 32) return value == BigInt.zero;
+  BigInt pow5 = BigInt.from(5);
+  for (int i = 1; i < q; i++) {
+    pow5 *= BigInt.from(5);
+  }
+  return (value % pow5) == BigInt.zero;
+}
+
+bool multipleOfPowerOf2_32(BigInt value, int q) {
+  if (q == 0) return true;
+  if (q >= 32) return value == BigInt.zero;
   return (value & ((BigInt.one << q) - BigInt.one)) == BigInt.zero;
 }

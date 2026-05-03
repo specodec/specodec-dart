@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'ryu_math.dart';
 import 'tables_f32.dart';
+import 'tables_f32.dart';
 
 const int FLOAT_MANTISSA_BITS = 23;
 const int FLOAT_BIAS = 127;
@@ -60,11 +61,9 @@ String float32ToString(double f) {
     
     if (q <= 9) {
       if (mv % BigInt.from(5) == BigInt.zero) {
-        vrIsTrailingZeros = multipleOfPowerOf5_64(mv, q);
-      } else if (acceptBounds) {
-        vmIsTrailingZeros = multipleOfPowerOf5_64(mm, q);
-      } else {
-        if (multipleOfPowerOf5_64(mp, q)) vp = vp - BigInt.one;
+vrIsTrailingZeros = multipleOfPowerOf5_32(mv, q);
+        vmIsTrailingZeros = multipleOfPowerOf5_32(mm, q);
+        if (multipleOfPowerOf5_32(mp, q)) vp = vp - BigInt.one;
       }
     }
   } else {
@@ -91,11 +90,13 @@ String float32ToString(double f) {
         vp = vp - BigInt.one;
       }
     } else if (q < 31) {
-      vrIsTrailingZeros = multipleOfPowerOf2_64(mv, q - 1);
+      vrIsTrailingZeros = multipleOfPowerOf2_32(mv, q - 1);
       if (acceptBounds) {
-        vmIsTrailingZeros = multipleOfPowerOf5_64(mm, q);
+        vmIsTrailingZeros = multipleOfPowerOf5_32(mm, q);
       } else {
-        if (multipleOfPowerOf5_64(mp, q)) vp = vp - BigInt.one;
+        if (multipleOfPowerOf5_32(mp, q)) {
+          vp = vp - BigInt.one;
+        }
       }
     }
   }
@@ -132,7 +133,7 @@ String float32ToString(double f) {
     bool roundUp = (vr2 == vm2 && (!acceptBounds || !vmIsTrailingZeros)) || lastDigit >= BigInt.from(5);
     BigInt output = roundUp ? vr2 + BigInt.one : vr2;
     int exp = e10 + removed;
-    int olength = decimalLength17(output);
+    int olength = decimalLength9(output);
     
     String result = sign ? "-" : "";
     String digits = output.toString();
@@ -154,7 +155,7 @@ String float32ToString(double f) {
     
     BigInt output = (vr2 == vm2 || lastDigit >= BigInt.from(5)) ? vr2 + BigInt.one : vr2;
     int exp = e10 + removed;
-    int olength = decimalLength17(output);
+    int olength = decimalLength9(output);
     
     String result = sign ? "-" : "";
     String digits = output.toString();
