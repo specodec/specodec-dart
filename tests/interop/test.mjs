@@ -14,14 +14,14 @@ function run(cmd) {
 }
 
 console.log('\n=== Step 1: Install dependencies ===');
-run(`cd ${__dir} && pnpm install`);
+run(`cd ${__dir} && npm install`);
 
 console.log('\n=== Step 2: Clone tests repo ===');
 if (existsSync(CACHE)) rmSync(CACHE, { recursive: true });
 run(`git clone --depth=1 https://github.com/specodec/tests ${CACHE}`);
 
 console.log('\n=== Step 3: Generate vectors ===');
-run(`cd ${CACHE} && pnpm install --frozen-lockfile`);
+run(`cd ${CACHE} && npm install --frozen-lockfile`);
 run(`cd ${CACHE} && node gen_types.mjs`);
 
 const VEC_DIR = join(CACHE, 'vectors');
@@ -78,7 +78,7 @@ environment:
 
 dependencies:
   specodec:
-    path: ../..
+    path: ../../..
   path: ^1.8.0
 `;
 writeFileSync(join(__dir, 'emit', 'pubspec.yaml'), pubspec);
