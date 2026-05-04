@@ -16,7 +16,7 @@ function run(cmd) {
 console.log('\n=== Step 1: Install dependencies ===');
 run(`cd ${__dir} && npm install`);
 
-if (!existsSync(join(CACHE, 'vectors'))) { console.log('\n=== Step 2: Clone tests repo ==='); if (existsSync(CACHE)) rmSync(CACHE, { recursive: true }); run(`git clone --depth=1 https://github.com/specodec/tests ${CACHE}`) } else { console.log('\n=== Step 2: Using cached .tests-cache ===') }
+console.log('\n=== Step 2: Using cached .tests-cache ===');
 
 console.log('\n=== Step 3: Generate vectors ===');
 run(`cd ${CACHE} && npm install --frozen-lockfile`);
@@ -100,13 +100,13 @@ for (const [name] of Object.entries(manifest.scalars || {})) {
   else { mismatch++; console.log(`MISMATCH: ${name}.mp`); }
 }
 for (const model of manifest.testModels || []) {
-  for (const fmt of ['msgpack', 'json', 'gron', 'unformatted.json']) {
-    const expected = join(VEC_DIR, `${model}.${fmt}`);
-    const actual = join(OUT_DIR, `${model}.${fmt}`);
+  for (const [outExt, vecExt] of [['msgpack','msgpack'], ['json','json'], ['unformatted.json','json'], ['gron','gron']]) {
+    const expected = join(VEC_DIR, `${model}.${vecExt}`);
+    const actual = join(OUT_DIR, `${model}.${outExt}`);
     if (!existsSync(expected)) continue;
-    if (!existsSync(actual)) { mismatch++; console.log(`MISSING: ${model}.${fmt}`); continue; }
+    if (!existsSync(actual)) { mismatch++; console.log(`MISSING: ${model}.${outExt}`); continue; }
     if (readFileSync(expected).equals(readFileSync(actual))) match++;
-    else { mismatch++; console.log(`MISMATCH: ${model}.${fmt}`); }
+    else { mismatch++; console.log(`MISMATCH: ${model}.${outExt}`); }
   }
 }
 const total = match + mismatch;

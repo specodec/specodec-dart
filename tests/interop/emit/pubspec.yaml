@@ -1,0 +1,10 @@
+name: emit_dart
+version: 1.0.0
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  specodec:
+    path: ../../..
+  path: ^1.8.0
