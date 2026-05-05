@@ -47,17 +47,6 @@ if (dartFiles.length > 0) {
   }
   console.log(`  ✓ Created specodec_all_types package`);
 
-  // Fix recursive type inference
-  const typesFile = join(EMIT_GEN, 'specodec_all_types', dartFiles[0]);
-  let typesContent = readFileSync(typesFile, 'utf-8');
-  for (const rec of ['RecList','RecTree','RecChain','RecWrap','RecWide']) {
-    typesContent = typesContent.replace(
-      new RegExp(`final ${rec}Codec = `, 'g'),
-      `final SpecCodec<${rec}> ${rec}Codec = `
-    );
-  }
-  writeFileSync(typesFile, typesContent);
-  console.log(`  ✓ Fixed recursive type inference`);
 } else {
   console.error('  FAIL: No generated Dart files');
   process.exit(1);
