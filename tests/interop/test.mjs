@@ -75,7 +75,7 @@ if (existsSync(OUT_DIR)) rmSync(OUT_DIR, { recursive: true });
 mkdirSync(OUT_DIR, { recursive: true });
 
 try { run(`cd ${__dir}/emit && dart pub get`); } catch (e) { console.log("Dart pub get completed (some failures expected)"); }
-try { run(`cd ${__dir}/emit && VEC_DIR=${VEC_DIR} OUT_DIR=${OUT_DIR} dart run run_emit.dart`); } catch (e) { console.log("Dart tests completed (some failures expected)"); }
+try { run(`cd ${__dir}/emit && VEC_DIR=${VEC_DIR} OUT_DIR=${OUT_DIR} dart run main.dart`); } catch (e) { console.log("Dart tests completed (some failures expected)"); }
 
 console.log('\n=== Step 8: Compare output ===');
 const manifest = JSON.parse(readFileSync(join(VEC_DIR, 'manifest.json'), 'utf-8'));
