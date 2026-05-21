@@ -18,7 +18,7 @@ run(`cd ${__dir} && npm install`);
 
 
 
-console.log('\n=== Step 4: Generate emit code ===');
+console.log('\n=== Step 2: Generate emit code ===');
 if (existsSync(EMIT_GEN)) rmSync(EMIT_GEN, { recursive: true });
 mkdirSync(EMIT_GEN, { recursive: true });
 
@@ -46,11 +46,11 @@ if (dartFiles.length > 0) {
   process.exit(1);
 }
 
-console.log('\n=== Step 5: Generate test runner ===');
+console.log('\n=== Step 3: Generate test runner ===');
 mkdirSync(join(__dir, 'emit'), { recursive: true });
 run(`cd ${__dir} && VEC_DIR=${VEC_DIR} node generate_emit_runner.mjs`);
 
-console.log('\n=== Step 6: Setup pubspec.yaml ===');
+console.log('\n=== Step 4: Runtime setup ===');
 const pubspec = `name: emit_dart
 version: 1.0.0
 
@@ -66,14 +66,14 @@ dependencies:
 `;
 writeFileSync(join(__dir, 'emit', 'pubspec.yaml'), pubspec);
 
-console.log('\n=== Step 7: Run tests ===');
+console.log('\n=== Step 5: Run tests ===');
 if (existsSync(OUT_DIR)) rmSync(OUT_DIR, { recursive: true });
 mkdirSync(OUT_DIR, { recursive: true });
 
 try { run(`cd ${__dir}/emit && dart pub get`); } catch (e) { console.log("Dart pub get completed (some failures expected)"); }
 try { run(`cd ${__dir}/emit && VEC_DIR=${VEC_DIR} OUT_DIR=${OUT_DIR} dart run main.dart`); } catch (e) { console.log("Dart tests completed (some failures expected)"); }
 
-console.log('\n=== Step 8: Compare output ===');
+console.log('\n=== Step 6: Compare output ===');
 const manifest = JSON.parse(readFileSync(join(VEC_DIR, 'manifest.json'), 'utf-8'));
 let match = 0, mismatch = 0;
 
