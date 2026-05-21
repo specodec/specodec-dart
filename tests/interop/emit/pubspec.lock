@@ -15,7 +15,7 @@ packages:
       path: "."
       ref: main
       resolved-ref: a0f3ef0a9ee12db255be7e2f96723b0974116902
-      url: "http://10.199.64.20:3000/specodec/specodec-runtime-dart.git"
+      url: "http://10.199.64.20:30000/specodec/specodec-runtime-dart.git"
     source: git
     version: "1.0.0"
 sdks:

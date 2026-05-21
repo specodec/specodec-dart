@@ -4,7 +4,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
-const CACHE = join(__dir, '.tests-cache');
+const VEC_DIR = join(__dir, "vectors");
 const EMIT_GEN = join(__dir, 'emit_gen');
 const OUT_DIR = join(__dir, 'output');
 
@@ -16,19 +16,13 @@ function run(cmd) {
 console.log('\n=== Step 1: Install dependencies ===');
 run(`cd ${__dir} && npm install`);
 
-console.log('\n=== Step 2: Using cached .tests-cache ===');
 
-console.log('\n=== Step 3: Generate vectors ===');
-run(`cd ${CACHE} && npm install --frozen-lockfile`);
-run(`cd ${CACHE} && node gen_types.mjs`);
-
-const VEC_DIR = join(CACHE, 'vectors');
 
 console.log('\n=== Step 4: Generate emit code ===');
 if (existsSync(EMIT_GEN)) rmSync(EMIT_GEN, { recursive: true });
 mkdirSync(EMIT_GEN, { recursive: true });
 
-run(`cd ${__dir} && node_modules/.bin/tsp compile ${CACHE}/alltypes.tsp --emit=@specodec/typespec-emitter-dart \
+run(`cd ${__dir} && node_modules/.bin/tsp compile ${__dir}/alltypes.tsp --emit=@specodec/typespec-emitter-dart \
   --option @specodec/typespec-emitter-dart.emitter-output-dir=${EMIT_GEN}`);
 
 const dartFiles = readdirSync(EMIT_GEN).filter(f => f.endsWith('.dart'));
@@ -66,7 +60,7 @@ environment:
 dependencies:
   specodec:
     git:
-      url: http://10.199.64.20:3000/specodec/specodec-runtime-dart.git
+      url: http://10.199.64.20:30000/specodec/specodec-runtime-dart.git
       ref: main
   path: ^1.8.0
 `;
